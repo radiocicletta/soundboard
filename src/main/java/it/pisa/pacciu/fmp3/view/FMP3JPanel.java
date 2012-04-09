@@ -325,7 +325,7 @@ public class FMP3JPanel extends javax.swing.JPanel {
 
     private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
         Integer keyCode = evt.getKeyCode();
-        if (MainService.isKeyAvailable(keyCode)) {
+        if (ms.isKeyAvailable(keyCode)) {
             ms.playFile(keyCode);
         }
     }//GEN-LAST:event_formKeyPressed

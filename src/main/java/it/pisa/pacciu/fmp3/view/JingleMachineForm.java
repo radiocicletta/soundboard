@@ -10,6 +10,9 @@
  */
 package it.pisa.pacciu.fmp3.view;
 
+import it.pisa.pacciu.fmp3.jaxb.History.FileLoaded;
+import it.pisa.pacciu.fmp3.service.HistoryService;
+import it.pisa.pacciu.fmp3.service.MainService;
 import it.pisa.pacciu.fmp3.view.util.FileTransferHandler;
 import it.pisa.pacciu.fmp3.view.util.TableValueInserted;
 import java.io.File;
@@ -25,9 +28,13 @@ import it.pisa.pacciu.fmp3.view.util.TransferableTreeNode;
 import it.pisa.pacciu.fmp3.view.util.TreeDragGestureListener;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
+import java.awt.event.KeyEvent;
 import javax.swing.DropMode;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  *
@@ -70,8 +77,14 @@ public class JingleMachineForm extends javax.swing.JFrame {
                     addNodesToDir(newDir, new TransferableTreeNode(subPath), Boolean.FALSE);
                 }
             } else {
-                addNodesToDir(curDir, new TransferableTreeNode(thisObject), Boolean.TRUE);
+                if (MP3_EXT.equals(
+                        FilenameUtils.getExtension(thisObject).toLowerCase())) {
+                    addNodesToDir(curDir, new TransferableTreeNode(thisObject), Boolean.TRUE);
+                }
             }
+        }
+        if (curDir.getChildCount() == 0) {
+            addNodesToDir(curDir, new TransferableTreeNode(EMPTY), Boolean.FALSE);
         }
         return curDir;
     }
@@ -86,12 +99,13 @@ public class JingleMachineForm extends javax.swing.JFrame {
         }
     }
 
-    private static DefaultTableModel getDefaultTableModel() {
+    private DefaultTableModel getDefaultTableModel() {
         String[] cols = {"File", "Key"};
         DefaultTableModel ris = new DefaultTableModel(null, cols) {
+
             @Override
             public boolean isCellEditable(int rowIndex, int mColIndex) {
-                return mColIndex!=0;
+                return mColIndex != 0;
             }
         };
         ris.addTableModelListener(new TableValueInserted());
@@ -100,7 +114,8 @@ public class JingleMachineForm extends javax.swing.JFrame {
 
     /** Creates new form JingleMachineForm */
     public JingleMachineForm() {
-//        for (Object object : System.getProperties().keySet()) {
+        super("Radiocicletta Sound board :)");
+        //        for (Object object : System.getProperties().keySet()) {
 //            System.out.println("**********"+object+"::"+System.getProperty(object.toString()));
 //        }
         initComponents();
@@ -117,17 +132,30 @@ public class JingleMachineForm extends javax.swing.JFrame {
     private void initComponents() {
 
         fileSystemPanel = new javax.swing.JScrollPane();
-        fileSystem = new javax.swing.JTree(addNodes(null, new File(HOME_DIR)));
+        fileSystem = new javax.swing.JTree(addNodes(null, new File(hs.getRootPath())));
         tabellaPanel = new javax.swing.JScrollPane();
         tabella = new javax.swing.JTable();
+        stopmusic = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                formKeyPressed(evt);
+            }
+        });
+
+        fileSystemPanel.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                fileSystemPanelKeyPressed(evt);
+            }
+        });
 
         defaultTreeModel =(DefaultTreeModel)fileSystem.getModel();
         defaultTreeModel.addTreeModelListener(new MyTreeModelListener());
         fileSystem.getSelectionModel().setSelectionMode
         (TreeSelectionModel.SINGLE_TREE_SELECTION);
         fileSystem.setShowsRootHandles(true);
+        fileSystem.setFocusable(Boolean.TRUE);
         DragSource dragSource = DragSource.getDefaultDragSource();
         dragSource
         .createDefaultDragGestureRecognizer(fileSystem,
@@ -145,19 +173,51 @@ public class JingleMachineForm extends javax.swing.JFrame {
                 fileSystemValueChanged(evt);
             }
         });
+        fileSystem.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                fileSystemKeyPressed(evt);
+            }
+        });
         fileSystemPanel.setViewportView(fileSystem);
+
+        tabellaPanel.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                tabellaPanelKeyPressed(evt);
+            }
+        });
 
         tabella.setModel(getDefaultTableModel());
         tabella.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tabella.setDropMode(DropMode.INSERT_ROWS);
         tabella.setFillsViewportHeight(Boolean.TRUE);
         tabella.setTransferHandler(new FileTransferHandler(tabella));
+        DefaultTableModel tableModel=(DefaultTableModel)tabella.getModel();
+        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tableModel);
+        tabella.setRowSorter(sorter);
+        int row=0;
+        for(FileLoaded fl:hs.getFileLoadeds()){
+            String[] data={fl.getPath(),fl.getKey()};
+            tableModel.insertRow(row++, data);
+            ms.addFile((int)fl.getKey().charAt(0), fl.getPath());
+        }
         tabella.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 tabellaPropertyChange(evt);
             }
         });
+        tabella.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                tabellaKeyPressed(evt);
+            }
+        });
         tabellaPanel.setViewportView(tabella);
+
+        stopmusic.setText("Stop music");
+        stopmusic.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopmusicActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -165,15 +225,22 @@ public class JingleMachineForm extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(fileSystemPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tabellaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 753, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(tabellaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 753, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(296, 296, 296)
+                        .addComponent(stopmusic, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(fileSystemPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(82, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(stopmusic, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
                 .addComponent(tabellaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 507, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -205,12 +272,59 @@ public class JingleMachineForm extends javax.swing.JFrame {
             int returnVal = fc.showOpenDialog(fileSystemPanel);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 defaultTreeModel.setRoot(addNodes(null, fc.getSelectedFile()));
+                hs.setRootPath(fc.getSelectedFile().getAbsolutePath());
             }
         }
     }//GEN-LAST:event_fileSystemValueChanged
 
     private void tabellaPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_tabellaPropertyChange
     }//GEN-LAST:event_tabellaPropertyChange
+
+    private void keyPressed(java.awt.event.KeyEvent evt) {
+        Integer keyCode = (int) evt.getKeyChar();
+        if (ms.isKeyAvailable(keyCode)) {
+            ms.playFile(keyCode);
+        }
+        this.requestFocusInWindow();
+    }
+
+    private void fileSystemPanelKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_fileSystemPanelKeyPressed
+        keyPressed(evt);
+    }//GEN-LAST:event_fileSystemPanelKeyPressed
+
+    private void tabellaPanelKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tabellaPanelKeyPressed
+        keyPressed(evt);
+    }//GEN-LAST:event_tabellaPanelKeyPressed
+
+    private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
+        keyPressed(evt);
+    }//GEN-LAST:event_formKeyPressed
+
+    private void fileSystemKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_fileSystemKeyPressed
+        keyPressed(evt);
+    }//GEN-LAST:event_fileSystemKeyPressed
+
+    private void tabellaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tabellaKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
+            DefaultTableModel tableModel = (DefaultTableModel) tabella.getModel();
+            int[] rowToCancel = tabella.getSelectedRows();
+            if (rowToCancel != null && rowToCancel.length > 0) {
+                for (int i = rowToCancel.length - 1; i >= 0; i--) {
+                    String key=tableModel.getValueAt(i, 1).toString();
+                    tableModel.removeRow(rowToCancel[i]);
+                    ms.removeFile(key.charAt(0));
+                    hs.removeFileLoaded(key);
+                }
+            }
+        } else {
+            keyPressed(evt);
+        }
+    }//GEN-LAST:event_tabellaKeyPressed
+
+    private void stopmusicActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopmusicActionPerformed
+        ms.stop();
+        this.requestFocusInWindow();
+    }//GEN-LAST:event_stopmusicActionPerformed
 
     /**
      * @param args the command line arguments
@@ -249,13 +363,16 @@ public class JingleMachineForm extends javax.swing.JFrame {
         });
     }
     private static Boolean expanding = Boolean.FALSE;
-    private static final String HOME_DIR = System.getProperty("user.home");
     private static final String EMPTY = "(Empty)";
+    private static final String MP3_EXT = "mp3";
+    private MainService ms = MainService.getInstance();
+    private HistoryService hs = HistoryService.getInstance();
     private JFileChooser fc = new JFileChooser();
     private DefaultTreeModel defaultTreeModel = null;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTree fileSystem;
     private javax.swing.JScrollPane fileSystemPanel;
+    private javax.swing.JButton stopmusic;
     private javax.swing.JTable tabella;
     private javax.swing.JScrollPane tabellaPanel;
     // End of variables declaration//GEN-END:variables

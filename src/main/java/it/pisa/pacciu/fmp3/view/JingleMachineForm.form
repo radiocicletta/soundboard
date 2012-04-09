@@ -7,6 +7,9 @@
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
   </SyntheticProperties>
+  <Events>
+    <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="formKeyPressed"/>
+  </Events>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -24,8 +27,16 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <Component id="fileSystemPanel" pref="498" max="32767" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="tabellaPanel" min="-2" pref="753" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" attributes="0">
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="tabellaPanel" min="-2" pref="753" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="296" max="-2" attributes="0"/>
+                      <Component id="stopmusic" min="-2" pref="166" max="-2" attributes="0"/>
+                  </Group>
+              </Group>
               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -34,7 +45,9 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Component id="fileSystemPanel" alignment="0" pref="600" max="32767" attributes="0"/>
           <Group type="102" alignment="1" attributes="0">
-              <EmptySpace pref="82" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="stopmusic" min="-2" pref="38" max="-2" attributes="0"/>
+              <EmptySpace pref="33" max="32767" attributes="0"/>
               <Component id="tabellaPanel" min="-2" pref="507" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -43,6 +56,9 @@
   </Layout>
   <SubComponents>
     <Container class="javax.swing.JScrollPane" name="fileSystemPanel">
+      <Events>
+        <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="fileSystemPanelKeyPressed"/>
+      </Events>
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -53,15 +69,19 @@
           <Events>
             <EventHandler event="treeExpanded" listener="javax.swing.event.TreeExpansionListener" parameters="javax.swing.event.TreeExpansionEvent" handler="fileSystemTreeExpanded"/>
             <EventHandler event="valueChanged" listener="javax.swing.event.TreeSelectionListener" parameters="javax.swing.event.TreeSelectionEvent" handler="fileSystemValueChanged"/>
+            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="fileSystemKeyPressed"/>
           </Events>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JTree(addNodes(null, new File(HOME_DIR)))"/>
-            <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="defaultTreeModel =(DefaultTreeModel)fileSystem.getModel();&#xa;defaultTreeModel.addTreeModelListener(new MyTreeModelListener());&#xa;fileSystem.getSelectionModel().setSelectionMode&#xa;                (TreeSelectionModel.SINGLE_TREE_SELECTION);&#xa;fileSystem.setShowsRootHandles(true);&#xa;DragSource dragSource = DragSource.getDefaultDragSource();&#xa;    dragSource&#xa;        .createDefaultDragGestureRecognizer(fileSystem,&#xa;            DnDConstants.ACTION_COPY_OR_MOVE,&#xa;            new TreeDragGestureListener());"/>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JTree(addNodes(null, new File(hs.getRootPath())))"/>
+            <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="defaultTreeModel =(DefaultTreeModel)fileSystem.getModel();&#xa;defaultTreeModel.addTreeModelListener(new MyTreeModelListener());&#xa;fileSystem.getSelectionModel().setSelectionMode&#xa;                (TreeSelectionModel.SINGLE_TREE_SELECTION);&#xa;fileSystem.setShowsRootHandles(true);&#xa;fileSystem.setFocusable(Boolean.TRUE);&#xa;DragSource dragSource = DragSource.getDefaultDragSource();&#xa;    dragSource&#xa;        .createDefaultDragGestureRecognizer(fileSystem,&#xa;            DnDConstants.ACTION_COPY_OR_MOVE,&#xa;            new TreeDragGestureListener());"/>
           </AuxValues>
         </Component>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JScrollPane" name="tabellaPanel">
+      <Events>
+        <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="tabellaPanelKeyPressed"/>
+      </Events>
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -82,9 +102,21 @@
           </Properties>
           <Events>
             <EventHandler event="propertyChange" listener="java.beans.PropertyChangeListener" parameters="java.beans.PropertyChangeEvent" handler="tabellaPropertyChange"/>
+            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="tabellaKeyPressed"/>
           </Events>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="DefaultTableModel tableModel=(DefaultTableModel)tabella.getModel();&#xa;TableRowSorter&lt;TableModel&gt; sorter = new TableRowSorter&lt;TableModel&gt;(tableModel);&#xa;tabella.setRowSorter(sorter);&#xa;int row=0;&#xa;for(FileLoaded fl:hs.getFileLoadeds()){&#xa;   String[] data={fl.getPath(),fl.getKey()};&#xa;   tableModel.insertRow(row++, data);&#xa;   ms.addFile((int)fl.getKey().charAt(0), fl.getPath());&#xa;}"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JButton" name="stopmusic">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Stop music"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="stopmusicActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>
